@@ -1,0 +1,32 @@
+# Build results
+bin/
+obj/
+
+# Rider / VSCode / Visual Studio
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ASP.NET Core
+appsettings.Development.json
+appsettings.Local.json
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets
+secrets.json
+
+# Node (if frontend lives here later)
+node_modules/
+dist/
+
+# Environment variables
+.env
