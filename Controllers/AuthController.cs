@@ -19,6 +19,10 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register(RegisterRequest request)
         => Ok(await _auth.Register(request));
 
+    [HttpPost("google")]
+    public async Task<IActionResult> GoogleAuth(GoogleAuthRequest request)
+        => Ok(await _auth.GoogleAuth(request));
+
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
         => Ok(await _auth.Login(request));

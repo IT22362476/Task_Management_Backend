@@ -19,9 +19,25 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     )
 );
 
-// 🔐 Auth services (ADD THESE 👇)
+// 🔐 Auth services
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<AuthService>();
+
+// 🌐 CORS (Angular)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular",
+        policy =>
+        {
+            policy
+                .WithOrigins(
+                    "http://localhost:4200",
+                    "https://localhost:4200"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
 
 // Swagger (OpenAPI)
 builder.Services.AddEndpointsApiExplorer();
@@ -41,9 +57,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
-// (JWT auth will be added next)
+// ⭐ CORS MUST come BEFORE auth
+app.UseCors("AllowAngular");
+
+// (JWT auth will be added later)
 app.UseAuthorization();
 
 // Map controllers

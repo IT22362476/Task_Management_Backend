@@ -12,6 +12,12 @@ public record LoginRequest(
     string Password
 );
 
+public class GoogleAuthRequest
+{
+    public string IdToken { get; set; }
+}
+
+
 public record TokenResponse(
     string AccessToken,
     string RefreshToken
