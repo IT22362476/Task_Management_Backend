@@ -1,97 +1,31 @@
-# ============================================================
-# Terraform — Infrastructure Provisioning (Manual Only)
-# ============================================================
-#
-# This workflow manages Azure infrastructure ONLY.
-# It runs MANUALLY via workflow_dispatch — NOT on push.
-#
-# Why manual?
-#   - Terraform state is currently local (not remote)
-#   - Infrastructure should only change when deliberately planned
-#   - Prevents accidental resource deletion/modification
-#
-# How to use:
-#   1. Go to GitHub repo → Actions → "Terraform — Infrastructure"
-#   2. Click "Run workflow" → choose branch → "Run"
-#   3. Terraform will init, validate, plan, and apply
-#
-# Required secrets:
-#   AZURE_CREDENTIALS
-#     Azure service principal JSON with Contributor role.
-#     Create: az ad sp create-for-rbac --name "github-actions-tf" \
-#               --role contributor \
-#               --scopes /subscriptions/{subscription-id} \
-#               --sdk-auth
-#
-# ============================================================
-name: Terraform — Infrastructure
+name: Terraform — Validate Only
 
 on:
-  workflow_dispatch:        # ONLY manual trigger — never on push
+  workflow_dispatch:
 
 env:
-  AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
   TF_ROOT: terraform
-  TF_VAR_location: 'Southeast Asia'
-  TF_VAR_resource_group_name: 'task-management-dev-rg'
-  TF_VAR_acr_name: 'taskmanagementdevacr'
-  TF_VAR_app_service_plan_name: 'taskmanagement-dev-plan'
-  TF_VAR_web_app_name: 'taskmanagement-dev-app'
-  TF_VAR_docker_image_name: 'task-manager-backend'
-  TF_VAR_docker_image_tag: 'latest'
 
 jobs:
-  terraform:
-    name: 'Terraform — Plan & Apply'
+  terraform-validate:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ${{ env.TF_ROOT }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # -------------------------------------------------------
-      # Cache the Terraform state between runs
-      # -------------------------------------------------------
-      # Since we use local state (not remote), we cache it so
-      # each workflow run picks up where the last one left off.
-      # The cache key is based on the branch and a hash of the
-      # Terraform config files. If the config changes, a new
-      # cache is created.
-      # -------------------------------------------------------
-      - name: Cache Terraform state
-        uses: actions/cache@v4
-        id: cache-tf
-        with:
-          path: |
-            ${{ env.TF_ROOT }}/.terraform
-            ${{ env.TF_ROOT }}/terraform.tfstate
-            ${{ env.TF_ROOT }}/terraform.tfstate.backup
-          key: ${{ runner.os }}-tf-${{ hashFiles('terraform/**/*.tf', 'terraform/**/*.tfvars') }}
+      - uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.8
 
-      - name: Log in to Azure
-        uses: azure/login@v2
-        with:
-          creds: ${{ env.AZURE_CREDENTIALS }}
-
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -backend=false
+
+      - name: Terraform Format Check
+        run: terraform fmt -check
 
       - name: Terraform Validate
         run: terraform validate
-
-      - name: Terraform Plan
-        run: terraform plan -out=tfplan
-
-      - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
-
-      - name: Terraform Outputs
-        run: terraform output
