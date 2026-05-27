@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Task_Manager_Backend.Data;
@@ -11,9 +12,11 @@ using Task_Manager_Backend.Data;
 namespace Task_Manager_Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260525165729_AddBusinessModels")]
+    partial class AddBusinessModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -90,32 +93,6 @@ namespace Task_Manager_Backend.Migrations
                     b.HasIndex("TaskId");
 
                     b.ToTable("Comments");
-                });
-
-            modelBuilder.Entity("Task_Manager_Backend.Models.Label", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectId");
-
-                    b.ToTable("Labels");
                 });
 
             modelBuilder.Entity("Task_Manager_Backend.Models.Project", b =>
@@ -249,15 +226,26 @@ namespace Task_Manager_Backend.Migrations
 
             modelBuilder.Entity("Task_Manager_Backend.Models.TaskLabel", b =>
                 {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<Guid>("TaskId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("LabelId")
-                        .HasColumnType("uuid");
+                    b.HasKey("Id");
 
-                    b.HasKey("TaskId", "LabelId");
-
-                    b.HasIndex("LabelId");
+                    b.HasIndex("TaskId");
 
                     b.ToTable("TaskLabels");
                 });
@@ -354,17 +342,6 @@ namespace Task_Manager_Backend.Migrations
                     b.Navigation("Task");
                 });
 
-            modelBuilder.Entity("Task_Manager_Backend.Models.Label", b =>
-                {
-                    b.HasOne("Task_Manager_Backend.Models.Project", "Project")
-                        .WithMany("Labels")
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Project");
-                });
-
             modelBuilder.Entity("Task_Manager_Backend.Models.Project", b =>
                 {
                     b.HasOne("Task_Manager_Backend.Models.User", "Owner")
@@ -423,32 +400,17 @@ namespace Task_Manager_Backend.Migrations
 
             modelBuilder.Entity("Task_Manager_Backend.Models.TaskLabel", b =>
                 {
-                    b.HasOne("Task_Manager_Backend.Models.Label", "Label")
-                        .WithMany("TaskLabels")
-                        .HasForeignKey("LabelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Task_Manager_Backend.Models.TaskItem", "Task")
-                        .WithMany("TaskLabels")
+                        .WithMany("Labels")
                         .HasForeignKey("TaskId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Label");
-
                     b.Navigation("Task");
-                });
-
-            modelBuilder.Entity("Task_Manager_Backend.Models.Label", b =>
-                {
-                    b.Navigation("TaskLabels");
                 });
 
             modelBuilder.Entity("Task_Manager_Backend.Models.Project", b =>
                 {
-                    b.Navigation("Labels");
-
                     b.Navigation("Members");
 
                     b.Navigation("Tasks");
@@ -458,7 +420,7 @@ namespace Task_Manager_Backend.Migrations
                 {
                     b.Navigation("Comments");
 
-                    b.Navigation("TaskLabels");
+                    b.Navigation("Labels");
                 });
 #pragma warning restore 612, 618
         }
