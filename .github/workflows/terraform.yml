@@ -69,7 +69,7 @@ jobs:
             ${{ env.TF_ROOT }}/.terraform
             ${{ env.TF_ROOT }}/terraform.tfstate
             ${{ env.TF_ROOT }}/terraform.tfstate.backup
-          key: ${{ runner.os }}-tf-${{ hashFiles(env.TF_ROOT '/**/*.tf', env.TF_ROOT '/**/*.tfvars') }}
+          key: ${{ runner.os }}-tf-${{ hashFiles('terraform/**/*.tf', 'terraform/**/*.tfvars') }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
