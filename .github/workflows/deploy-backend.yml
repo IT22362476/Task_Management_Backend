@@ -33,6 +33,7 @@ on:
     branches:
       - main
       - develop
+      - Development
     paths:
       - '**'
       - '.github/workflows/deploy-backend.yml'
