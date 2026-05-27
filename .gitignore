@@ -31,13 +31,21 @@ dist/
 # Environment variables
 .env
 
-# Terraform state files (contain sensitive data)
+# ============================================================
+# Terraform — Local state (NOT committed to git)
+# ============================================================
+# State files contain infrastructure metadata and sensitive
+# values (like resource IDs). They are cached between GitHub
+# Actions runs using actions/cache (see terraform.yml).
+#
+# NEVER commit *.tfstate files to git.
+# For teams, migrate to Azure Storage backend (see README).
 *.tfstate
 *.tfstate.*.backup
 *.tfstate.backup
 
-# Terraform provider cache
+# Terraform provider cache (downloaded on 'terraform init')
 .terraform/
 
-# Terraform plan files
+# Terraform plan files (binary, not human-readable)
 *.tfplan

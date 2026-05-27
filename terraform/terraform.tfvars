@@ -1,26 +1,27 @@
 # ============================================================
-# Terraform Variable Values
+# Terraform Variable Values — Development Environment
 # ============================================================
-# These are the default values. They can be overridden via
-# TF_VAR_* environment variables (as done in GitHub Actions).
+# These match the Azure resources that already exist.
+# Do NOT change these unless you intentionally want to
+# recreate infrastructure.
 #
 # ============================================================
 
-# Azure region
+# Azure region (where resources are currently deployed)
 location = "Southeast Asia"
 
-# Resource group for all resources
-resource_group_name = "task-management-prod-rg"
+# Existing resource group
+resource_group_name = "task-management-dev-rg"
 
-# ACR name (must be globally unique — change if taken)
-acr_name = "taskmanagementprodacr"
+# Existing ACR (must be globally unique)
+acr_name = "taskmanagementdevacr"
 
-# Linux App Service Plan
-app_service_plan_name = "taskmanagement-prod-plan"
+# Existing App Service Plan
+app_service_plan_name = "taskmanagement-dev-plan"
 
-# Linux Web App for Containers
-web_app_name = "taskmanagement-prod-app"
+# Existing Web App
+web_app_name = "taskmanagement-dev-app"
 
-# Docker image
+# Docker image configuration
 docker_image_name = "task-manager-backend"
 docker_image_tag  = "latest"
