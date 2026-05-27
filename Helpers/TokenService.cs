@@ -1,8 +1,8 @@
-using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.IdentityModel.Tokens;
 using Task_Manager_Backend.Models;
 
 namespace Task_Manager_Backend.Helpers;
@@ -18,17 +18,20 @@ public class TokenService
 
     public string GenerateAccessToken(User user)
     {
+        var jwtKey = _config["Jwt:Key"]
+            ?? Environment.GetEnvironmentVariable("JWT_KEY")
+            ?? throw new InvalidOperationException("JWT Key is not configured. Set Jwt:Key in app settings or JWT_KEY environment variable.");
+
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Role)
+            new Claim(ClaimTypes.Role, user.Role),
+            new Claim("fullName", user.FullName),
+            new Claim("provider", user.Provider)
         };
 
-        var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(_config["Jwt:Key"]!)
-        );
-
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
@@ -36,7 +39,7 @@ public class TokenService
             audience: _config["Jwt:Audience"],
             claims: claims,
             expires: DateTime.UtcNow.AddMinutes(
-                int.Parse(_config["Jwt:AccessTokenExpiryMinutes"]!)
+                _config.GetValue<int>("Jwt:AccessTokenExpiryMinutes")
             ),
             signingCredentials: creds
         );
@@ -49,7 +52,6 @@ public class TokenService
         var randomBytes = new byte[64];
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomBytes);
-
         return Convert.ToBase64String(randomBytes);
     }
 }

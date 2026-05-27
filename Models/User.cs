@@ -20,6 +20,9 @@ public class User
     [Required, MaxLength(20)]
     public string Role { get; set; } = "Employee";
 
+    [MaxLength(100)]
+    public string? Department { get; set; }
+
     [Required, MaxLength(20)]
     public string Provider { get; set; } = "Local";
 

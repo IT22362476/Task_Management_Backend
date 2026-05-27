@@ -12,10 +12,7 @@ public record LoginRequest(
     string Password
 );
 
-public class GoogleAuthRequest
-{
-    public string IdToken { get; set; }
-}
+public record GoogleAuthRequest(string IdToken);
 
 
 public record TokenResponse(
