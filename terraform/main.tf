@@ -24,16 +24,30 @@ terraform {
     }
   }
 
-  # Recommended: store state in Azure Storage for team collaboration.
-  # Uncomment and configure the backend block below AFTER creating
-  # the storage account manually (one-time setup):
+  # ============================================================
+  # Remote State Storage (Azure Storage)
+  # ============================================================
+  # State is stored remotely so GitHub Actions runs share it.
   #
-  # backend "azurerm" {
-  #   resource_group_name  = "task-management-tfstate"
-  #   storage_account_name = "taskmanagertfstate"
-  #   container_name       = "tfstate"
-  #   key                  = "task-manager-dev.tfstate"
-  # }
+  # ONE-TIME SETUP — run this before the first pipeline run (if
+  # the storage account doesn't exist yet):
+  #
+  #   az group create --name task-management-tfstate --location "East US"
+  #   az storage account create --name taskmanagertfstate \
+  #     --resource-group task-management-tfstate --sku Standard_LRS
+  #   az storage container create --name tfstate \
+  #     --account-name taskmanagertfstate
+  #
+  # After the storage account is ready, run locally:
+  #   terraform init -migrate-state
+  # to migrate the local state to Azure.
+  #
+  backend "azurerm" {
+    resource_group_name  = "task-management-tfstate"
+    storage_account_name = "taskmanagertfstate"
+    container_name       = "tfstate"
+    key                  = "task-manager-dev.tfstate"
+  }
 }
 
 # Configure the AzureRM provider
