@@ -30,3 +30,14 @@ dist/
 
 # Environment variables
 .env
+
+# Terraform state files (contain sensitive data)
+*.tfstate
+*.tfstate.*.backup
+*.tfstate.backup
+
+# Terraform provider cache
+.terraform/
+
+# Terraform plan files
+*.tfplan
