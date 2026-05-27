@@ -46,7 +46,7 @@ terraform {
     resource_group_name  = "task-management-tfstate"
     storage_account_name = "taskmanagertfstate"
     container_name       = "tfstate"
-    key                  = "task-manager-dev.tfstate"
+    key                  = "task-manager-backend.tfstate"
   }
 }
 

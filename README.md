@@ -28,24 +28,42 @@ docker run -p 5135:8080 \
 
 The GitHub Actions workflow is located at:
 ```
-.github/workflows/deploy-dev.yml
+.github/workflows/deploy-backend.yml
 ```
 
-It:
-1. **Terraform** — Provisions/updates Azure infrastructure (RG, ACR, App Service Plan, Web App)
-2. **Build & Push** — Builds the Docker image and pushes to ACR
-3. **Deploy** — Sets app settings (JWT, DB connection, etc.) and restarts the Web App
+It fully automates everything — no manual Azure setup needed:
 
-Triggers on pushes to the `develop` branch.
+1. **Terraform** — Automatically provisions/updates the Azure infrastructure:
+   - Resource Group
+   - Azure Container Registry (ACR)
+   - Linux App Service Plan
+   - Linux Web App for Containers (with System-Assigned Managed Identity)
+   - Role Assignment (AcrPull for secure image pulls — no admin credentials)
+2. **Build & Push** — Builds the Docker image and pushes to ACR using Azure CLI auth
+3. **Deploy** — Sets app settings (JWT, DB connection, etc.) and restarts the Web App
+4. **Verify** — Checks the `/health` endpoint to confirm the deployment succeeded
+
+Triggers on pushes to `main` and `develop` branches.
+
+## Infrastructure (Terraform)
+
+Terraform configs are in [`terraform/`](terraform/):
+
+| File | Purpose |
+|------|---------|
+| `main.tf` | Core resources — RG, ACR, App Service Plan, Web App, Role Assignment |
+| `variables.tf` | Input variables with descriptions |
+| `outputs.tf` | Outputs — ACR login server, web app URL, etc. |
+| `terraform.tfvars` | Default variable values |
 
 ### Required GitHub Secrets
 
 | Secret | Description |
 |--------|-------------|
 | `AZURE_CREDENTIALS` | Azure service principal JSON (with Contributor + AcrPush roles) |
-| `DEV_JWT_KEY` | JWT signing key for dev environment (32+ chars) |
-| `DEV_DB_CONNECTION` | PostgreSQL connection string for dev DB |
-| `DEV_GOOGLE_CLIENT_ID` | Google OAuth client ID for dev |
+| `JWT_KEY` | JWT signing key for production (32+ chars) |
+| `DB_CONNECTION` | PostgreSQL connection string for production DB |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
 
 ### One-Time: Terraform Remote State Setup
 
@@ -72,14 +90,7 @@ cd terraform
 terraform init -migrate-state
 ```
 
-### Why the Pipeline Was Fixed
-
-The original setup had several issues that caused the pipeline to fail:
-
-1. **Workflow file was outside the git repo** — `deploy-dev.yml` was at the outer `Task_Manager/.github/workflows/` level, but the git repo root is `Task_Manager-Backend/`. GitHub only sees workflows inside the repo's `.github/workflows/` directory.
-
-2. **Wrong paths in the workflow** — Since the git root is `Task_Manager-Backend/`, paths like `DOTNET_PROJECT_PATH: Task_Manager-Backend` resolved to a non-existent nested directory. Fixed to use `.` as the project root.
-
-3. **Terraform state not persisted** — State was stored locally and excluded from git. Without remote state (Azure Storage backend), each GitHub Actions run would try to create resources from scratch, causing "already exists" errors.
-
-4. **Terraform directory untracked** — The `terraform/` folder wasn't committed to git. Now all `.tf` config files are tracked (state files are gitignored for security).
+> **Note:** The ACR uses **Managed Identity** for image pulls (not admin credentials).
+> The Build step uses `az acr login` (Azure CLI with service principal) to push images,
+> and the Web App uses its System-Assigned Managed Identity to pull them — all without
+> storing any ACR passwords in GitHub Secrets.

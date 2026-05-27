@@ -1,27 +1,26 @@
 # ============================================================
-# Terraform Variable Values — Development Environment
+# Terraform Variable Values
 # ============================================================
-# 
-# Fill in your preferred region. The naming convention uses
-# "task-management-dev-*" to avoid conflict with production.
+# These are the default values. They can be overridden via
+# TF_VAR_* environment variables (as done in GitHub Actions).
 #
 # ============================================================
 
-# Azure region — change to your closest region
+# Azure region
 location = "Southeast Asia"
 
-# Resource group for all development resources
-resource_group_name = "task-management-dev-rg"
+# Resource group for all resources
+resource_group_name = "task-management-prod-rg"
 
-# ACR name (must be globally unique — change if "taskmanagementdevacr" is taken)
-acr_name = "taskmanagementdevacr"
+# ACR name (must be globally unique — change if taken)
+acr_name = "taskmanagementprodacr"
 
 # Linux App Service Plan
-app_service_plan_name = "taskmanagement-dev-plan"
+app_service_plan_name = "taskmanagement-prod-plan"
 
 # Linux Web App for Containers
-web_app_name = "taskmanagement-dev-app"
+web_app_name = "taskmanagement-prod-app"
 
-# Docker image as built by GitHub Actions
+# Docker image
 docker_image_name = "task-manager-backend"
 docker_image_tag  = "latest"
