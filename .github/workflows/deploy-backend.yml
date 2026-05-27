@@ -93,9 +93,14 @@ jobs:
 
       - name: Verify deployment
         run: |
-          sleep 30
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${{ env.WEBAPP_URL }}/health" || echo "000")
+          echo "Waiting for app to start..."
+          sleep 90
+
+          HTTP_CODE=$(curl -L -s -o /dev/null -w "%{http_code}" "${{ env.WEBAPP_URL }}/health" || echo "000")
+
           echo "Health endpoint returned: HTTP $HTTP_CODE"
+
           if [ "$HTTP_CODE" != "200" ]; then
+            echo "Deployment verification failed"
             exit 1
           fi
