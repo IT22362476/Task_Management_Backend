@@ -18,6 +18,7 @@ Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .WriteTo.Console()
     .CreateLogger();
+    
 
 builder.Host.UseSerilog();
 
