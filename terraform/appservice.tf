@@ -40,6 +40,9 @@ resource "azurerm_linux_web_app" "main" {
     ]
   }
 
+  # Tell App Service which identity to use when resolving Key Vault references
+  key_vault_reference_identity_id = azurerm_user_assigned_identity.app_service.id
+
   # Docker container configuration
   site_config {
     always_on                                     = true
