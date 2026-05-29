@@ -42,8 +42,10 @@ resource "azurerm_linux_web_app" "main" {
 
   # Docker container configuration
   site_config {
-    always_on     = true
-    http2_enabled = true
+    always_on                                     = true
+    http2_enabled                                 = true
+    container_registry_use_managed_identity        = true
+    container_registry_managed_identity_client_id  = azurerm_user_assigned_identity.app_service.client_id
 
     application_stack {
       docker_image_name   = "taskmanager:latest"
