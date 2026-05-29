@@ -62,5 +62,13 @@ resource "azurerm_key_vault_secret" "connection_string" {
   depends_on = [azurerm_key_vault_access_policy.terraform_user]
 }
 
+resource "azurerm_key_vault_secret" "jwt_key" {
+  name         = "jwt-key"
+  value        = random_password.jwt_key.result
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [azurerm_key_vault_access_policy.terraform_user]
+}
+
 # Current Azure client (used for tenant_id)
 data "azurerm_client_config" "current" {}
