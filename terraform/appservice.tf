@@ -57,18 +57,18 @@ resource "azurerm_linux_web_app" "main" {
   # App settings
   app_settings = {
     # ── PostgreSQL connection (via Key Vault reference) ──
-    "ConnectionStrings__DefaultConnection" = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.connection_string.id})"
+    "ConnectionStrings__DefaultConnection" = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.connection_string.versionless_id}/)"
 
     # ── ASP.NET Core settings ──
     "ASPNETCORE_ENVIRONMENT" = "Production"
     "ASPNETCORE_URLS"        = "http://+:8080"
 
-    # ── JWT Settings (overridable via GitHub Actions deploy) ──
+    # ── JWT Settings ──
     "Jwt__Issuer"                   = "TaskManager"
     "Jwt__Audience"                 = "TaskManagerUsers"
     "Jwt__AccessTokenExpiryMinutes" = "15"
     "Jwt__RefreshTokenExpiryDays"   = "7"
-    "Jwt__Key"                      = "" # MUST be set via Azure Portal or GitHub Actions
+    "Jwt__Key"                      = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.jwt_key.versionless_id}/)"
 
     # ── Google Auth (overridable) ──
     "GoogleAuth__ClientId" = ""

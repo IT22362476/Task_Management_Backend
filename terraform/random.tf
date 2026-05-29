@@ -26,3 +26,12 @@ resource "random_password" "postgres_app" {
   min_numeric      = 2
   min_special      = 2
 }
+
+# JWT signing key (long, alphanumeric – no special chars to avoid config issues)
+resource "random_password" "jwt_key" {
+  length  = 64
+  special = false
+  min_upper = 2
+  min_lower = 2
+  min_numeric = 2
+}
