@@ -1,0 +1,11 @@
+# =============================================================================
+# Example terraform.tfvars – copy to terraform.tfvars and customize
+# =============================================================================
+
+prefix    = "taskmgr"
+location  = "Southeast Asia"
+environment = "prod"
+
+postgres_admin_username = "pgadmin"
+postgres_database_name  = "taskmanagerdb"
+postgres_app_username   = "taskuser"

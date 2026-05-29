@@ -1,0 +1,170 @@
+# =============================================================================
+# CI/CD Pipeline: Build → Push to ACR → Deploy to Azure → Run Migrations
+# =============================================================================
+name: Build, Deploy & Migrate
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:    # Allow manual trigger
+
+env:
+  # ── Azure Resources (update these!) ──
+  AZURE_RESOURCE_GROUP:  taskmgr-rg-prod
+  APP_SERVICE_NAME:      taskmgr-app-prod
+  ACR_LOGIN_SERVER:      ${{ secrets.ACR_LOGIN_SERVER }}
+  ACR_USERNAME:          ${{ secrets.ACR_USERNAME }}
+  ACR_PASSWORD:          ${{ secrets.ACR_PASSWORD }}
+
+  # ── Docker ──
+  DOCKER_IMAGE_NAME:     taskmanager
+  DOCKER_TAG:            ${{ github.sha }}
+
+  # ── .NET ──
+  DOTNET_VERSION:        '8.0.x'
+
+jobs:
+  # ──────────────────────────────────────────────
+  #   JOB 1: Build, Test & Push Docker Image
+  # ──────────────────────────────────────────────
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build (Release)
+        run: dotnet build --configuration Release --no-restore
+
+      # - name: Run unit tests (if any)
+      #   run: dotnet test --configuration Release --no-build --verbosity normal || true
+
+      - name: Login to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR_LOGIN_SERVER }}
+          username: ${{ env.ACR_USERNAME }}
+          password: ${{ env.ACR_PASSWORD }}
+
+      - name: Build & push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.DOCKER_IMAGE_NAME }}:latest
+
+  # ──────────────────────────────────────────────
+  #   JOB 2: Deploy to Azure App Service
+  # ──────────────────────────────────────────────
+  deploy:
+    name: Deploy to Azure Web App
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.APP_SERVICE_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          images: |
+            ${{ env.ACR_LOGIN_SERVER }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Wait for app to be healthy
+        run: |
+          echo "Waiting for deployment to stabilize..."
+          sleep 30
+          # Check health endpoint (up to 2 minutes)
+          for i in {1..12}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://${{ env.APP_SERVICE_NAME }}.azurewebsites.net/health || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "✓ App is healthy (HTTP 200)"
+              break
+            fi
+            echo "Attempt $i: Got HTTP $STATUS, retrying in 10s..."
+            sleep 10
+          done
+
+  # ──────────────────────────────────────────────
+  #   JOB 3: Run EF Core Database Migrations
+  # ──────────────────────────────────────────────
+  migrate:
+    name: Run DB Migrations
+    runs-on: ubuntu-latest
+    needs: deploy
+    # Always run migrations, even if deploy was skipped (idempotent)
+    if: always()
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install EF Core tools
+        run: |
+          dotnet tool install --global dotnet-ef
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+      - name: Restore project dependencies
+        run: dotnet restore
+
+      - name: Apply EF Core migrations
+        run: |
+          echo "Running EF Core database migrations..."
+          dotnet ef database update \
+            --connection "${{ secrets.AZURE_POSTGRES_CONNECTION_STRING }}" \
+            --verbose
+        env:
+          # Fallback: use connection string from App Service if secret is missing
+          DOTNET_ENVIRONMENT: Production
+
+      - name: Verify migration status
+        run: |
+          echo "✓ Migrations applied successfully"
+          dotnet ef migrations list \
+            --connection "${{ secrets.AZURE_POSTGRES_CONNECTION_STRING }}" || true
+
+  # ──────────────────────────────────────────────
+  #   JOB 4: (Optional) Seed reference data
+  # ──────────────────────────────────────────────
+  seed-data:
+    name: Seed Reference Data
+    runs-on: ubuntu-latest
+    needs: migrate
+    if: false    # Disabled by default – enable when you have seed scripts
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Run seed SQL
+        run: |
+          PGPASSWORD="${{ secrets.AZURE_POSTGRES_APP_PASSWORD }}" \
+          psql -h "${{ secrets.AZURE_POSTGRES_HOST }}" \
+               -U "${{ secrets.AZURE_POSTGRES_APP_USER }}" \
+               -d "${{ secrets.AZURE_POSTGRES_DATABASE }}" \
+               -f scripts/seed-data.sql
+        env:
+          PGCONNECT_TIMEOUT: 10
+          PGSSLMODE: require

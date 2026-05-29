@@ -1,53 +1,48 @@
-# ============================================================
-# Terraform Variables — Task Manager Development Environment
-# ============================================================
-# 
-# All configurable values are defined here. Set them in
-# terraform.tfvars or pass via environment variables (TF_VAR_*).
-#
-# ============================================================
+# =============================================================================
+# Variables
+# =============================================================================
 
-# Azure region where all resources will be created
+variable "prefix" {
+  description = "Prefix used for naming all Azure resources"
+  type        = string
+  default     = "taskmgr"
+}
+
 variable "location" {
-  description = "Azure region for all resources (e.g., East US, West Europe)"
+  description = "Azure region for all resources"
   type        = string
+  default     = "Southeast Asia"
 }
 
-# Resource Group — containers all dev resources
-variable "resource_group_name" {
-  description = "Name of the development resource group"
+variable "environment" {
+  description = "Deployment environment (e.g., dev, staging, prod)"
   type        = string
+  default     = "prod"
 }
 
-# Azure Container Registry (ACR) — stores Docker images
-# Note: ACR names must be globally unique and alphanumeric only (no hyphens)
-variable "acr_name" {
-  description = "Globally unique name for Azure Container Registry (letters+numbers only)"
+variable "postgres_admin_username" {
+  description = "PostgreSQL admin username (avoid 'postgres' or 'admin')"
   type        = string
+  default     = "pgadmin"
 }
 
-# App Service Plan — defines the compute tier for the web app
-variable "app_service_plan_name" {
-  description = "Name of the Linux App Service Plan"
+variable "postgres_database_name" {
+  description = "Name of the application database"
   type        = string
+  default     = "taskmanagerdb"
 }
 
-# Web App — runs the containerized .NET backend
-variable "web_app_name" {
-  description = "Name of the Azure Web App for Containers"
+variable "postgres_app_username" {
+  description = "PostgreSQL application (non-admin) username"
   type        = string
+  default     = "taskuser"
 }
 
-# Docker image name (as tagged in ACR)
-variable "docker_image_name" {
-  description = "Name of the Docker image in ACR (e.g., task-manager-backend)"
-  type        = string
-  default     = "task-manager-backend"
-}
-
-# Docker image tag (version)
-variable "docker_image_tag" {
-  description = "Tag of the Docker image to deploy (e.g., latest, v1.0.0, git-sha)"
-  type        = string
-  default     = "latest"
-}
+# Derived naming convention:
+# ACR:          <prefix>acr (max 50 chars, alphanumeric)
+# App Service:  <prefix>-app-<environment> (max 60 chars)
+# PostgreSQL:   <prefix>-psql-<environment> (max 63 chars)
+# Key Vault:    <prefix>-kv-<environment> (max 24 chars, globally unique)
+# Storage:      <prefix>stg<environment> (max 24 chars, globally unique, lowercase)
+# App Plan:     <prefix>-plan-<environment>
+# RG:           <prefix>-rg-<environment>
