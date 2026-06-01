@@ -67,7 +67,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
         policy
-            .WithOrigins("http://localhost:4200", "https://localhost:4200")
+            .WithOrigins(
+                "http://localhost:4200",
+                "https://localhost:4200",
+                "https://task-management-system-ckbk.vercel.app")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials());
