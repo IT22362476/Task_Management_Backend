@@ -132,7 +132,9 @@ public class TaskService
             Priority = request.Priority,
             ProjectId = projectId,
             AssigneeId = assigneeId,
-            DueDate = request.DueDate,
+            DueDate = request.DueDate.HasValue
+                ? DateTime.SpecifyKind(request.DueDate.Value, DateTimeKind.Utc)
+                : null,
             CreatedById = createdById,
             Status = "todo"
         };
@@ -218,7 +220,8 @@ public class TaskService
         if (request.Priority != null) task.Priority = request.Priority;
         if (!string.IsNullOrEmpty(request.AssigneeId) && Guid.TryParse(request.AssigneeId, out var parsedAssignee))
             task.AssigneeId = parsedAssignee;
-        if (request.DueDate != null) task.DueDate = request.DueDate;
+        if (request.DueDate.HasValue)
+            task.DueDate = DateTime.SpecifyKind(request.DueDate.Value, DateTimeKind.Utc);
 
         if (request.Status == "completed" && oldStatus != "completed")
             task.CompletedAt = DateTime.UtcNow;
