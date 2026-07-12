@@ -106,6 +106,8 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+app.UseCors("AllowAngular");
+
 app.UseMiddleware<ExceptionMiddleware>();
 
 // Enable Swagger in all environments (useful for Azure deployment)
@@ -115,8 +117,6 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Task Manager API v1");
     c.RoutePrefix = "swagger";
 });
-
-app.UseCors("AllowAngular");
 app.UseAuthentication();
 app.UseAuthorization();
 
